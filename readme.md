@@ -4,4 +4,4 @@ These automation scripts are for my own homelab environment. Feel free to use th
 
 Ubuntu:
 
-ubuntu_server_install.sh : Generates and updates locale and timezone settings. Installs chrony and syncs to timeserver. Installs auditd and sysmon with custom rules, and elastic agent.
+configure_server.sh : This script generates and updates locale and timezone settings. Installs chrony and syncs to timeserver. Installs auditd and sysmon with custom rules, and elastic agent.
