@@ -117,23 +117,13 @@ sleep 15
 echo "Checking Elastic Agent systemd service status:"
 if systemctl is-active --quiet elastic-agent; then
     echo "Elastic Agent service is running."
-else
-    echo "Elastic Agent service is NOT running."
-fi
+    elastic-agent status || echo "Elastic Agent status check failed."
 
-elastic-agent status || echo "Elastic Agent status check failed."
-
-# Check if Elastic Agent service is running and healthy before cleanup
-if systemctl is-active --quiet elastic-agent; then
-    echo "Elastic Agent service is running. Cleaning up installation files..."
-
-    # Delete downloaded tar.gz archives in /tmp matching pattern
+    echo "Cleaning up the old installation files..."
     rm -f /tmp/elastic-agent-*-linux-x86_64.tar.gz
-
-    # Delete extracted directories in /tmp matching pattern
     find /tmp -maxdepth 1 -type d -name "elastic-agent-*-linux-x86_64" -exec rm -rf {} +
-
     echo "Cleanup done."
 else
-    echo "Elastic Agent service is NOT running. Skipping cleanup."
+    echo "Elastic Agent service is not running yet. Skipping cleanup."
 fi
+
