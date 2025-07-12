@@ -173,12 +173,4 @@ else
   run_step "Restarting Sysmon service" systemctl restart sysmon.service
 fi
 
-echo "Installing Elastic Agent 9.0.3..."
-cd /tmp
-run_step "Downloading Elastic Agent" curl -s -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-9.0.3-linux-x86_64.tar.gz
-run_step "Extracting Elastic Agent" tar xzf elastic-agent-9.0.3-linux-x86_64.tar.gz
-cd elastic-agent-9.0.3-linux-x86_64
-run_step "Installing & enrolling Elastic Agent" ./elastic-agent install --non-interactive --url=https://elastic.lineit.nl:8220 --enrollment-token="$ENROLL_TOKEN"
-
-echo "Elastic Agent was installed correctly and enrolled with fleet server via the provided enrollment token."
 echo "Setup complete. Restart your shell session, this is required to correctly apply new locale settings."
