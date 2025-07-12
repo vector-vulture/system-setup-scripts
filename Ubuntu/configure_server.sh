@@ -45,7 +45,6 @@ echo " - Set desired system timezone and locales"
 echo " - Chrony (time sync daemon, time server is required)"
 echo " - Auditd with custom rules"
 echo " - Sysmon for Linux"
-echo " - Elastic Agent"
 echo
 read -rp "Do you want to continue? (y/n): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
@@ -93,16 +92,6 @@ while true; do
     break
   else
     echo "Auditd backlog limit must be a number."
-  fi
-done
-
-while true; do
-  echo "Enter your Elastic Agent Enrollment Token:"
-  read -r ENROLL_TOKEN
-  if [[ ${#ENROLL_TOKEN} -ge 32 ]]; then
-    break
-  else
-    echo "Elastic Agent enrollment token must be at least 32 characters long."
   fi
 done
 
