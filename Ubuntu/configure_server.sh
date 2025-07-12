@@ -90,7 +90,7 @@ while true; do
   if [[ "$BACKLOG_LIMIT" =~ ^[0-9]+$ ]]; then
     break
   else
-    echo "Auditd backlog limit must be a number."
+    echo "Auditd backlog limit must be an integer."
   fi
 done
 
@@ -98,8 +98,8 @@ run_step "Generating locales" locale-gen "$FIRST_LOCALE" "$SECOND_LOCALE"
 run_step "Setting locales" update-locale LANG="$FIRST_LOCALE"
 for LC_VAR in LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES \
               LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION; do
-  update-locale "$LC_VAR=$SECOND_LOCALE" &> /dev/null
-  done
+  update-locale "$LC_VAR=$SECOND_LOCALE" &>/dev/null
+done
 
 run_step "Setting timezone" timedatectl set-timezone "$USER_TIMEZONE"
 run_step "Installing chrony" apt install -y chrony wget
@@ -151,8 +151,9 @@ run_step "Loading persistent rules" augenrules --load
 run_step "Restarting auditd" systemctl restart auditd
 
 echo "Current audit backlog limit setting:"
-auditctl -s | grep backlog
+auditctl -s | grep "backlog_limit"
 
+# === Sysmon for Linux Setup ===
 SYSMON_CONFIG_URL="https://raw.githubusercontent.com/vector-vulture/sysmon/refs/heads/main/ubuntu/sysmon.xml"
 SYSMON_CONFIG_PATH="/etc/sysmon/sysmon.xml"
 SYSMON_BIN="/usr/bin/sysmon"
@@ -162,15 +163,12 @@ if ! dpkg -s sysmonforlinux &>/dev/null; then
   run_step "Installing MS repo package" dpkg -i /tmp/packages-microsoft-prod.deb
   run_step "Updating local package cache" apt-get update
   run_step "Installing sysmonforlinux" apt-get install -y sysmonforlinux
-  mkdir -p "$(dirname "$SYSMON_CONFIG_PATH")"
-  run_step "Downloading Sysmon config" curl -fsSL "$SYSMON_CONFIG_URL" -o "$SYSMON_CONFIG_PATH"
-  run_step "Installing Sysmon" "$SYSMON_BIN" -i "$SYSMON_CONFIG_PATH"
-  run_step "Enabling Sysmon service" systemctl enable sysmon.service
-  run_step "Starting Sysmon service" systemctl start sysmon.service
-else
-  run_step "Downloading Sysmon config" curl -fsSL "$SYSMON_CONFIG_URL" -o "$SYSMON_CONFIG_PATH"
-  run_step "Updating Sysmon config" "$SYSMON_BIN" -c "$SYSMON_CONFIG_PATH"
-  run_step "Restarting Sysmon service" systemctl restart sysmon.service
 fi
 
-echo "Setup complete. Restart your shell session, this is required to correctly apply new locale settings."
+mkdir -p "$(dirname "$SYSMON_CONFIG_PATH")"
+run_step "Downloading Sysmon config" curl -fsSL "$SYSMON_CONFIG_URL" -o "$SYSMON_CONFIG_PATH"
+run_step "Installing Sysmon" "$SYSMON_BIN" -i "$SYSMON_CONFIG_PATH"
+run_step "Enabling Sysmon service" systemctl enable sysmon.service
+run_step "Starting Sysmon service" systemctl start sysmon.service
+
+echo "Setup complete. Restart your shell session to correctly apply new locale settings."
