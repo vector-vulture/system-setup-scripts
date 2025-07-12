@@ -2,57 +2,77 @@
 
 set -e
 
-# === Spinner function for progress indication ===
+# === Configuration ===
+FLEET_URL="https://elastic.fleet.com:8220"    # ← Fleet server URL
+ENROLL_TOKEN="REPLACE_WITH_YOUR_TOKEN"        # ← Enrollment token
+
+# === Spinner & Runner ===
 spinner() {
-    local pid=$1
-    local delay=0.1
-    local spinstr='|/-\'
+    local pid=$1 delay=0.1 spin='|/-\'
     while kill -0 "$pid" 2>/dev/null; do
-        local temp=${spinstr#?}
-        printf " [%c]  " "$spinstr"
-        spinstr=$temp${spinstr%"$temp"}
+        printf " [%c]  " "${spin:0:1}"
+        spin="${spin:1}${spin:0:1}"
         sleep $delay
         printf "\b\b\b\b\b\b"
     done
     printf "    \b\b\b\b"
 }
 
-# === Run step helper with spinner ===
 run_step() {
-  echo -n "$1..."
-  shift
-  "$@" &>/dev/null &
-  pid=$!
-  spinner $pid
-  wait $pid
-  if [ $? -ne 0 ]; then
-    echo " Error!"
-    exit 1
-  else
-    echo " Done."
-  fi
+    echo -n "$1..."
+    shift
+    "$@" &>/dev/null &
+    pid=$!
+    spinner $pid
+    wait $pid
+    if [ $? -ne 0 ]; then
+        echo " Error!"
+        exit 1
+    else
+        echo " Done."
+    fi
 }
 
-# === Ensure the script is run as root ===
+# === Check for Root ===
 if [[ $EUID -ne 0 ]]; then
-  echo "This script must be run as the root user."
-  exit 1
+    echo "This script must be run as the root user."
+    exit 1
 fi
 
 # === Script Confirmation ===
-echo "This script will install the Elastic Agent"
+echo "This script will install the latest Elastic Agent."
 read -rp "Do you want to continue? (y/n): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-  echo "Aborted by user."
-  exit 0
+    echo "Aborted by user."
+    exit 0
 fi
 
-echo "Installing Elastic Agent 9.0.3..."
-cd /tmp
-run_step "Downloading Elastic Agent" curl -s -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-9.0.3-linux-x86_64.tar.gz
-run_step "Extracting Elastic Agent" tar xzf elastic-agent-9.0.3-linux-x86_64.tar.gz
-cd elastic-agent-9.0.3-linux-x86_64
-run_step "Installing & enrolling Elastic Agent" ./elastic-agent install --non-interactive --url=https://elastic.lineit.nl:8220 --enrollment-token="$ENROLL_TOKEN"
+# === Detect Latest Version ===
+echo "Fetching latest Elastic Agent release info from GitHub..."
+LATEST_TAG=$(curl -fsSL https://api.github.com/repos/elastic/beats/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+if [[ -z "$LATEST_TAG" ]]; then
+    echo "Failed to detect latest version."
+    exit 1
+fi
 
-echo "Elastic Agent was installed correctly and enrolled with fleet server via the provided enrollment token."
-echo "Setup complete. Check Kibana interface for connection status."
+LATEST_VERSION="${LATEST_TAG#v}"
+echo "Latest Elastic Agent version detected: $LATEST_VERSION"
+
+# === Download and Install ===
+cd /tmp
+
+TARBALL="elastic-agent-${LATEST_VERSION}-linux-x86_64.tar.gz"
+DOWNLOAD_URL="https://artifacts.elastic.co/downloads/beats/elastic-agent/${TARBALL}"
+
+echo "Now downloading and extracting..."
+
+run_step "Downloading agent $LATEST_VERSION" curl -s -O "$DOWNLOAD_URL"
+run_step "Extracting agent" tar xzf "$TARBALL"
+cd "elastic-agent-${LATEST_VERSION}-linux-x86_64"
+
+run_step "Installing & enrolling agent" ./elastic-agent install --non-interactive --url="$FLEET_URL" --enrollment-token="$ENROLL_TOKEN"
+
+echo "Checking Elastic Agent status..."
+./elastic-agent status
+
+echo "Elastic Agent $LATEST_VERSION installed and enrolled to fleet server successfully."
