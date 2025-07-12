@@ -40,12 +40,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # === Script Confirmation ===
-echo "This script will help install and configure the following:"
-echo " - Set desired system timezone and locales"
-echo " - Chrony (time sync daemon, time server is required)"
-echo " - Auditd with custom rules"
-echo " - Sysmon for Linux"
-echo
+echo "This script will install the Elastic Agent"
 read -rp "Do you want to continue? (y/n): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   echo "Aborted by user."
@@ -60,4 +55,4 @@ cd elastic-agent-9.0.3-linux-x86_64
 run_step "Installing & enrolling Elastic Agent" ./elastic-agent install --non-interactive --url=https://elastic.lineit.nl:8220 --enrollment-token="$ENROLL_TOKEN"
 
 echo "Elastic Agent was installed correctly and enrolled with fleet server via the provided enrollment token."
-echo "Setup complete. Restart your shell session, this is required to correctly apply new locale settings."
+echo "Setup complete. Check Kibana interface for connection status."
