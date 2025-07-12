@@ -45,7 +45,6 @@ echo " - Set desired system timezone and locales"
 echo " - Chrony (time sync daemon, time server is required)"
 echo " - Auditd with custom rules"
 echo " - Sysmon for Linux"
-echo
 read -rp "Do you want to continue? (y/n): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   echo "Aborted by user."
@@ -154,7 +153,7 @@ run_step "Restarting auditd" systemctl restart auditd
 echo "Current audit backlog limit setting:"
 auditctl -s | grep backlog
 
-SYSMON_CONFIG_URL="https://raw.githubusercontent.com/vector-vulture/symonforlinux-config/main/sysmon.xml"
+SYSMON_CONFIG_URL="https://raw.githubusercontent.com/vector-vulture/sysmon/refs/heads/main/ubuntu/sysmon.xml"
 SYSMON_CONFIG_PATH="/etc/sysmon/sysmon.xml"
 SYSMON_BIN="/usr/bin/sysmon"
 
